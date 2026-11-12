@@ -1,18 +1,27 @@
 const { PrismaClient } = require('@prisma/client')
+const bcrypt = require('bcryptjs')
 
 const prisma = new PrismaClient()
+
+const DEMO_PASSWORD = 'password123'
 
 async function main() {
   await prisma.post.deleteMany()
   await prisma.tag.deleteMany()
   await prisma.user.deleteMany()
 
+  const passwordHash = await bcrypt.hash(DEMO_PASSWORD, 10)
+
   const alice = await prisma.user.create({
-    data: { email: 'alice@example.com', name: 'Alice', role: 'ADMIN' }
+    data: { email: 'alice@example.com', name: 'Alice', password: passwordHash, role: 'ADMIN' }
+  })
+
+  await prisma.user.create({
+    data: { email: 'mod@example.com', name: 'Moderator', password: passwordHash, role: 'MODERATOR' }
   })
 
   const bob = await prisma.user.create({
-    data: { email: 'bob@example.com', name: 'Bob' }
+    data: { email: 'bob@example.com', name: 'Bob', password: passwordHash }
   })
 
   await prisma.post.create({
@@ -49,7 +58,7 @@ async function main() {
     }
   })
 
-  console.log('Тестовые данные добавлены: 2 пользователя, 3 поста')
+  console.log(`Тестовые данные добавлены: alice (ADMIN), mod (MODERATOR), bob (USER), пароль у всех ${DEMO_PASSWORD}`)
 }
 
 main()

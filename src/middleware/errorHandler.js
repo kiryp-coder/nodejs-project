@@ -1,6 +1,12 @@
+const config = require('../config')
+
 function errorHandler(err, req, res, next) {
   if (err.type === 'entity.parse.failed') {
     return res.status(400).json({ error: 'Некорректный JSON в теле запроса' })
+  }
+
+  if (err.type === 'entity.too.large') {
+    return res.status(413).json({ error: 'Слишком большое тело запроса (максимум 10 КБ)' })
   }
 
   if (err.code === 'P2002') {
@@ -23,7 +29,13 @@ function errorHandler(err, req, res, next) {
     console.error(err)
   }
 
-  res.status(status).json({ error: message })
+  const response = { error: message }
+
+  if (config.nodeEnv === 'development') {
+    response.stack = err.stack
+  }
+
+  res.status(status).json(response)
 }
 
 module.exports = errorHandler

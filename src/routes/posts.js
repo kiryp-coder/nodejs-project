@@ -1,6 +1,8 @@
 const express = require('express')
 const Joi = require('joi')
 const prisma = require('../db')
+const authenticate = require('../middleware/auth')
+const { requirePermission, requirePostOwnerOr } = require('../middleware/rbac')
 const { validate, validateId } = require('../middleware/validate')
 
 const router = express.Router()
@@ -19,7 +21,6 @@ const createPostSchema = Joi.object({
   title: Joi.string().trim().min(1).max(200).required(),
   content: Joi.string().allow('', null),
   published: Joi.boolean().default(false),
-  authorId: Joi.number().integer().min(1).required(),
   tags: tagsSchema.default([])
 })
 
@@ -35,6 +36,8 @@ const includeAuthorAndTags = {
   tags: true
 }
 
+router.use(authenticate)
+
 function tagsToConnectOrCreate(tagNames) {
   return tagNames.map((name) => ({
     where: { name: name },
@@ -42,7 +45,7 @@ function tagsToConnectOrCreate(tagNames) {
   }))
 }
 
-router.get('/', validate(postsQuerySchema, 'query'), async (req, res) => {
+router.get('/', requirePermission('read:posts'), validate(postsQuerySchema, 'query'), async (req, res) => {
   const { search, published, authorId, page, limit } = req.validated
 
   const where = {}
@@ -74,7 +77,7 @@ router.get('/', validate(postsQuerySchema, 'query'), async (req, res) => {
   })
 })
 
-router.get('/:id', validateId, async (req, res) => {
+router.get('/:id', requirePermission('read:posts'), validateId, async (req, res) => {
   const post = await prisma.post.findUnique({
     where: { id: req.id },
     include: includeAuthorAndTags
@@ -87,21 +90,15 @@ router.get('/:id', validateId, async (req, res) => {
   res.json({ data: post })
 })
 
-router.post('/', validate(createPostSchema), async (req, res) => {
-  const { title, content, published, authorId, tags } = req.validated
-
-  const author = await prisma.user.findUnique({ where: { id: authorId } })
-
-  if (!author) {
-    return res.status(400).json({ error: `Автор с id ${authorId} не найден` })
-  }
+router.post('/', requirePermission('create:posts'), validate(createPostSchema), async (req, res) => {
+  const { title, content, published, tags } = req.validated
 
   const post = await prisma.post.create({
     data: {
       title: title,
       content: content,
       published: published,
-      authorId: authorId,
+      authorId: req.user.id,
       tags: { connectOrCreate: tagsToConnectOrCreate(tags) }
     },
     include: includeAuthorAndTags
@@ -110,7 +107,7 @@ router.post('/', validate(createPostSchema), async (req, res) => {
   res.status(201).json({ data: post })
 })
 
-router.patch('/:id', validateId, validate(updatePostSchema), async (req, res) => {
+router.patch('/:id', validateId, requirePostOwnerOr('update:any:posts'), validate(updatePostSchema), async (req, res) => {
   const { title, content, published, tags } = req.validated
 
   const data = { title, content, published }
@@ -131,7 +128,7 @@ router.patch('/:id', validateId, validate(updatePostSchema), async (req, res) =>
   res.json({ data: post })
 })
 
-router.delete('/:id', validateId, async (req, res) => {
+router.delete('/:id', validateId, requirePostOwnerOr('delete:any:posts'), async (req, res) => {
   await prisma.post.delete({ where: { id: req.id } })
   res.status(204).send()
 })
