@@ -20,4 +20,15 @@ function validate(schema, source = 'body') {
   }
 }
 
-module.exports = validate
+function validateId(req, res, next) {
+  const id = Number(req.params.id)
+
+  if (!Number.isInteger(id) || id < 1) {
+    return res.status(400).json({ error: 'id должен быть положительным целым числом' })
+  }
+
+  req.id = id
+  next()
+}
+
+module.exports = { validate, validateId }
