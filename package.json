@@ -5,9 +5,10 @@
   "main": "src/server.js",
   "scripts": {
     "start": "node src/server.js",
+    "start:prod": "prisma migrate deploy && node src/server.js",
     "dev": "node --watch src/server.js",
     "test": "jest --runInBand",
-    "db:up": "docker compose up -d db",
+    "db:up": "docker compose up -d db redis",
     "migrate": "prisma migrate dev",
     "seed": "prisma db seed",
     "studio": "prisma studio"
@@ -29,11 +30,12 @@
     "helmet": "^8.3.0",
     "ioredis": "^6.0.0",
     "joi": "^18.3.2",
-    "jsonwebtoken": "^9.0.3"
+    "jsonwebtoken": "^9.0.3",
+    "prisma": "^6.19.3",
+    "swagger-ui-express": "^5.0.1"
   },
   "devDependencies": {
     "jest": "^30.5.2",
-    "prisma": "^6.19.3",
     "supertest": "^7.3.2"
   },
   "prisma": {
@@ -48,5 +50,8 @@
     "testMatch": [
       "**/__tests__/**/*.test.js"
     ]
+  },
+  "engines": {
+    "node": ">=22"
   }
 }

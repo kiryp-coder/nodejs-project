@@ -1,0 +1,37 @@
+services:
+  - type: web
+    name: nodejs-project
+    runtime: node
+    plan: free
+    buildCommand: npm ci && npx prisma generate
+    startCommand: npm run start:prod
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: TRUST_PROXY
+        value: "true"
+      - key: DATABASE_URL
+        fromDatabase:
+          name: nodejs-project-db
+          property: connectionString
+      - key: REDIS_URL
+        fromService:
+          type: keyvalue
+          name: nodejs-project-redis
+          property: connectionString
+      - key: JWT_ACCESS_SECRET
+        generateValue: true
+      - key: JWT_REFRESH_SECRET
+        generateValue: true
+
+  - type: keyvalue
+    name: nodejs-project-redis
+    plan: free
+    ipAllowList: []
+
+databases:
+  - name: nodejs-project-db
+    plan: free
+    databaseName: blog
+    user: blog

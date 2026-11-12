@@ -15,6 +15,7 @@ function getRequiredVariable(name) {
 const config = {
   port: Number(process.env.PORT) || 3000,
   nodeEnv: process.env.NODE_ENV || 'development',
+  trustProxy: process.env.TRUST_PROXY === 'true',
   jwt: {
     accessSecret: getRequiredVariable('JWT_ACCESS_SECRET'),
     refreshSecret: getRequiredVariable('JWT_REFRESH_SECRET'),
