@@ -1,4 +1,4 @@
-const { app, prisma, request, clearDatabase } = require('./helpers')
+const { app, prisma, request, clearDatabase, closeConnections } = require('./helpers')
 
 const newUser = { name: 'Test User', email: 'test@example.com', password: 'password123' }
 
@@ -7,7 +7,7 @@ beforeEach(async () => {
 })
 
 afterAll(async () => {
-  await prisma.$disconnect()
+  await closeConnections()
 })
 
 describe('Регистрация', () => {

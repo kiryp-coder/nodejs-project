@@ -1,4 +1,4 @@
-const { app, prisma, request, clearDatabase, registerUser } = require('./helpers')
+const { app, prisma, request, clearDatabase, closeConnections, registerUser } = require('./helpers')
 
 let owner
 let otherUser
@@ -23,7 +23,7 @@ beforeEach(async () => {
 })
 
 afterAll(async () => {
-  await prisma.$disconnect()
+  await closeConnections()
 })
 
 describe('Посты: владелец и права', () => {

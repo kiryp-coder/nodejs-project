@@ -2,11 +2,17 @@ const request = require('supertest')
 const app = require('../src/app')
 const prisma = require('../src/db')
 const { generateTokens } = require('../src/utils/jwt')
+const { emailQueue, closeEmailQueue } = require('../src/queues/emailQueue')
 
 async function clearDatabase() {
   await prisma.post.deleteMany()
   await prisma.tag.deleteMany()
   await prisma.user.deleteMany()
+}
+
+async function closeConnections() {
+  await closeEmailQueue()
+  await prisma.$disconnect()
 }
 
 async function registerUser(name, email, role) {
@@ -25,4 +31,4 @@ async function registerUser(name, email, role) {
   return { user: user, token: accessToken }
 }
 
-module.exports = { app, prisma, request, clearDatabase, registerUser }
+module.exports = { app, prisma, request, emailQueue, clearDatabase, closeConnections, registerUser }

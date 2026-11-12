@@ -3,12 +3,16 @@ const helmet = require('helmet')
 const cookieParser = require('cookie-parser')
 const logger = require('./middleware/logger')
 const errorHandler = require('./middleware/errorHandler')
+const adminBasicAuth = require('./middleware/adminBasicAuth')
+const { BOARD_PATH, boardRouter } = require('./queues/board')
 const authRouter = require('./routes/auth')
 const adminRouter = require('./routes/admin')
 const usersRouter = require('./routes/users')
 const postsRouter = require('./routes/posts')
 
 const app = express()
+
+app.use(BOARD_PATH, helmet({ contentSecurityPolicy: false }), adminBasicAuth, boardRouter)
 
 app.use(helmet())
 app.use(logger)

@@ -7,6 +7,7 @@ const config = require('../config')
 const { validate } = require('../middleware/validate')
 const authenticate = require('../middleware/auth')
 const { generateTokens, verifyRefreshToken } = require('../utils/jwt')
+const { addRegistrationEmails } = require('../queues/emailQueue')
 
 const router = express.Router()
 
@@ -61,6 +62,8 @@ router.post('/register', validate(registerSchema), async (req, res) => {
   const user = await prisma.user.create({
     data: { email: email, name: name, password: passwordHash }
   })
+
+  await addRegistrationEmails(user)
 
   sendTokens(res, 201, user)
 })
